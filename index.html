@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NZ Curriculum Phase 3 Geometry Test 2</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7f6;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .page { display: none; }
+    .active { display: block; }
+    h2 { color: #2c3e50; font-size: 20px; }
+    .svg-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .options-group {
+      margin-top: 20px;
+    }
+    .option-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      background: #eef2f5;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .option-btn:hover { background: #e2e8f0; }
+    .option-btn.selected { background: #bae6fd; border-color: #0284c7; }
+    .nav-btn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .feedback-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Student Info Screen -->
+  <div id="page-details" class="page active">
+    <h2>NZ Phase 3 Geometry Assessment (Part 2)</h2>
+    <label>Student Name:</label>
+    <input type="text" id="studentName" class="input-field" placeholder="Enter your full name">
+    <label>Year Level:</label>
+    <input type="text" id="studentYear" class="input-field" placeholder="e.g. Year 7 or Year 8">
+    <button class="nav-btn" onclick="startTest()">Start Test</button>
+  </div>
+
+  <!-- Dynamic Question Pages -->
+  <div id="question-container"></div>
+
+  <!-- Final Results Screen -->
+  <div id="page-results" class="page">
+    <h2>Test Completed!</h2>
+    <p id="scoreDisplay"></p>
+    <div id="feedbackDisplay" class="feedback-box"></div>
+    <br>
+    <button class="nav-btn" onclick="teacherAccess()">Teacher Data Export (PIN required)</button>
+  </div>
+</div>
+
+<script>
+  // Google Apps Script URL for automatically saving results to your Google Sheet
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWlcw4GrYC3AjLZq9odgjqEqlziZ07WXnUbtiFhg1wSyQgN83QVDuFbVMkKHq-Zg/exec";
+
+  const questions = [
+    {
+      q: "1. Look at the triangle below. It has three unequal sides and an angle measuring 110°. How would you classify it by both its sides and angles?",
+      svg: `<svg width="220" height="110"><polygon points="20,90 190,90 80,30" fill="none" stroke="#0284c7" stroke-width="3"/><text x="75" y="75" font-size="13">110°</text></svg>`,
+      options: ["A) Equilateral acute triangle", "B) Scalene obtuse triangle", "C) Isosceles right triangle", "D) Scalene acute triangle"],
+      answer: "B",
+      topic: "Classifying scalene and obtuse triangles"
+    },
+    {
+      q: "2. Estimate the size of the angle shown in the diagram below.",
+      svg: `<svg width="160" height="120"><line x1="20" y1="100" x2="140" y2="100" stroke="#0284c7" stroke-width="3"/><line x1="20" y1="100" x2="110" y2="20" stroke="#0284c7" stroke-width="3"/><path d="M 50 100 A 30 30 0 0 0 45 78" fill="none" stroke="#ef4444" stroke-width="2"/><text x="60" y="85" font-size="16">?</text></svg>`,
+      options: ["A) 45°", "B) 90°", "C) 135°", "D) 160°"],
+      answer: "A",
+      topic: "Estimating acute angles"
+    },
+    {
+      q: "3. Point A is at (3, 2). It is reflected across the vertical mirror line x = 5. What are the coordinates of its image?",
+      svg: `<svg width="200" height="120"><line x1="120" y1="10" x2="120" y2="110" stroke="#ef4444" stroke-width="2" stroke-dasharray="4"/><circle cx="70" cy="60" r="5" fill="#0284c7"/><text x="50" y="55" font-size="13">A (3,2)</text><text x="110" y="10" font-size="12" fill="#ef4444">Mirror line</text></svg>`,
+      options: ["A) (3, 6)", "B) (5, 2)", "C) (7, 2)", "D) (7, 5)"],
+      answer: "C",
+      topic: "Reflections across mirror lines"
+    },
+    {
+      q: "4. Look at the angle in the diagram below. Estimate its size.",
+      svg: `<svg width="200" height="120"><line x1="160" y1="100" x2="30" y2="100" stroke="#0284c7" stroke-width="3"/><line x1="160" y1="100" x2="40" y2="30" stroke="#0284c7" stroke-width="3"/><path d="M 120 100 A 40 40 0 0 1 125 75" fill="none" stroke="#ef4444" stroke-width="2"/><text x="100" y="85" font-size="16">?</text></svg>`,
+      options: ["A) 40°", "B) 85°", "C) 135°", "D) 175°"],
+      answer: "C",
+      topic: "Estimating obtuse angles"
+    },
+    {
+      q: "5. Shape A is rotated 90° clockwise about point (0,0). If a corner of Shape A is at (1, 4), where does that corner land?",
+      svg: ``,
+      options: ["A) (4, -1)", "B) (-1, 4)", "C) (-4, 1)", "D) (1, -4)"],
+      answer: "A",
+      topic: "90° clockwise rotations"
+    },
+    {
+      q: "6. A triangle has sides of length 6 cm, 6 cm, and 6 cm. What are the measures of its three interior angles?",
+      svg: `<svg width="150" height="120"><polygon points="75,15 15,105 135,105" fill="none" stroke="#0284c7" stroke-width="3"/><text x="35" y="60" font-size="12">6cm</text><text x="100" y="60" font-size="12">6cm</text><text x="65" y="118" font-size="12">6cm</text></svg>`,
+      options: ["A) 45°, 45°, 90°", "B) 60°, 60°, 60°", "C) 50°, 50°, 80°", "D) 30°, 60°, 90°"],
+      answer: "B",
+      topic: "Equilateral triangle properties (all angles 60°)"
+    },
+    {
+      q: "7. A shape is first translated 3 units Left, and then reflected across the y-axis. What type of transformation sequence is this?",
+      svg: ``,
+      options: ["A) A single scaling", "B) A composite transformation", "C) A single rotation", "D) An enlargement"],
+      answer: "B",
+      topic: "Composite transformations"
+    },
+    {
+      q: "8. What is the total sum of the exterior angles of any convex polygon (such as an octagon or decagon)?",
+      svg: `<svg width="140" height="120"><polygon points="70,10 120,40 120,90 70,110 20,90 20,40" fill="none" stroke="#0284c7" stroke-width="3"/></svg>`,
+      options: ["A) 180°", "B) 540°", "C) 360°", "D) 720°"],
+      answer: "C",
+      topic: "Sum of exterior angles of polygons (360°)"
+    },
+    {
+      q: "9. A right triangle has one angle of 90° and one angle of 35°. What is the third angle, and what side-type is it if all sides are different lengths?",
+      svg: `<svg width="160" height="110"><polygon points="20,20 20,90 140,90" fill="none" stroke="#0284c7" stroke-width="3"/><rect x="20" y="75" width="15" height="15" fill="none" stroke="#ef4444"/><text x="100" y="85" font-size="13">35°</text></svg>`,
+      options: ["A) 55°, Scalene right triangle", "B) 45°, Isosceles right triangle", "C) 65°, Scalene right triangle", "D) 55°, Equilateral triangle"],
+      answer: "A",
+      topic: "Right triangles and scalene properties"
+    },
+    {
+      q: "10. An isosceles triangle has two equal side lengths. If the two equal base angles measure 55° each, what is the top angle?",
+      svg: `<svg width="160" height="120"><polygon points="80,15 20,105 140,105" fill="none" stroke="#0284c7" stroke-width="3"/><text x="30" y="100" font-size="13">55°</text><text x="110" y="100" font-size="13">55°</text><text x="73" y="40" font-size="13">?</text></svg>`,
+      options: ["A) 90°", "B) 70°", "C) 110°", "D) 60°"],
+      answer: "B",
+      topic: "Isosceles base angles and angle sums"
+    },
+    {
+      q: "11. A rectangle on a grid has vertices at (1,1), (1,3), (4,1), and (4,3). It is scaled (enlarged) by a factor of 2 from the origin. What are the new dimensions of its sides?",
+      svg: ``,
+      options: ["A) Width 3, Height 2", "B) Width 6, Height 4", "C) Width 5, Height 4", "D) Width 8, Height 6"],
+      answer: "B",
+      topic: "Scaling 2D composite shapes on grids"
+    },
+    {
+      q: "12. Estimate the angle turn shown in the compass diagram below, turning clockwise from North to South-West (SW).",
+      svg: `<svg width="140" height="140"><circle cx="70" cy="70" r="50" fill="none" stroke="#cbd5e1" stroke-width="2"/><text x="65" y="15" font-weight="bold">N</text><text x="125" y="75" font-weight="bold">E</text><text x="65" y="135" font-weight="bold">S</text><text x="5" y="75" font-weight="bold">W</text><line x1="70" y1="70" x2="70" y2="20" stroke="#ef4444" stroke-width="2"/><line x1="70" y1="70" x2="30" y2="110" stroke="#0284c7" stroke-width="3"/></svg>`,
+      options: ["A) 90°", "B) 180°", "C) 225°", "D) 315°"],
+      answer: "C",
+      topic: "Compass bearings and half-point turns"
+    },
+    {
+      q: "13. Using the polygon interior angle rule 180(n - 2)°, what is the interior angle sum of a 6-sided hexagon?",
+      svg: ``,
+      options: ["A) 540°", "B) 720°", "C) 900°", "D) 360°"],
+      answer: "B",
+      topic: "Polygon interior angle formula"
+    },
+    {
+      q: "14. A map uses a scale where 1 cm on the map equals 2 km in the real world. If a pathway is measured at 7.5 cm on the map, how long is the real pathway?",
+      svg: ``,
+      options: ["A) 9.5 km", "B) 15 km", "C) 3.75 km", "D) 150 km"],
+      answer: "B",
+      topic: "Map scale calculations"
+    },
+    {
+      q: "15. What is the radius of a circular bike wheel if its total diameter measured straight across the centre is 60 cm?",
+      svg: `<svg width="130" height="130"><circle cx="65" cy="65" r="50" fill="none" stroke="#0284c7" stroke-width="3"/><line x1="15" y1="65" x2="115" y2="65" stroke="#ef4444" stroke-width="2"/><text x="45" y="60" font-size="13">60 cm</text></svg>`,
+      options: ["A) 120 cm", "B) 30 cm", "C) 15 cm", "D) 188 cm"],
+      answer: "B",
+      topic: "Circle radius vs. diameter relationship"
+    }
+  ];
+
+  let currentStep = 0;
+  let userAnswers = {};
+  let studentData = {};
+
+  function renderQuestions() {
+    const container = document.getElementById('question-container');
+    questions.forEach((q, idx) => {
+      let optHtml = q.options.map(opt => {
+        let val = opt.charAt(0);
+        return `<button class="option-btn" onclick="selectOption(${idx}, '${val}', this)">${opt}</button>`;
+      }).join('');
+
+      container.innerHTML += `
+        <div id="page-q${idx}" class="page">
+          <h2>Question ${idx + 1} of 15</h2>
+          <p>${q.q}</p>
+          <div class="svg-container">${q.svg}</div>
+          <div class="options-group">${optHtml}</div>
+          <button class="nav-btn" onclick="nextQuestion(${idx})">${idx === 14 ? 'Submit Test' : 'Next Question'}</button>
+        </div>
+      `;
+    });
+  }
+
+  function startTest() {
+    const name = document.getElementById('studentName').value;
+    const year = document.getElementById('studentYear').value;
+    if(!name || !year) {
+      alert("Please enter both your name and year level.");
+      return;
+    }
+    studentData.name = name;
+    studentData.year = year;
+    document.getElementById('page-details').classList.remove('active');
+    document.getElementById('page-q0').classList.add('active');
+  }
+
+  function selectOption(qIdx, val, btn) {
+    userAnswers[qIdx] = val;
+    let parent = btn.parentElement;
+    Array.from(parent.children).forEach(child => child.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  function nextQuestion(qIdx) {
+    if(!userAnswers[qIdx]) {
+      alert("Please select an answer before moving forward.");
+      return;
+    }
+    document.getElementById(`page-q${qIdx}`).classList.remove('active');
+    if(qIdx < 14) {
+      document.getElementById(`page-q${qIdx + 1}`).classList.add('active');
+    } else {
+      calculateAndShowResults();
+    }
+  }
+
+  function calculateAndShowResults() {
+    let score = 0;
+    let missedTopics = [];
+
+    questions.forEach((q, idx) => {
+      if(userAnswers[idx] === q.answer) {
+        score++;
+      } else {
+        missedTopics.push(q.topic);
+      }
+    });
+
+    let phaseStatus = "";
+    if(score >= 13) {
+      phaseStatus = "Consolidated Phase 3 (Working securely at/above expectation)";
+    } else if(score >= 9) {
+      phaseStatus = "Developing Phase 3 (Achieving core concepts, building fluency)";
+    } else {
+      phaseStatus = "Emerging Phase 3 (Requires foundational consolidation)";
+    }
+
+    let improvementText = missedTopics.length > 0 
+      ? "Focus on revising these topics: " + missedTopics.join("; ") 
+      : "Excellent work! You demonstrated complete mastery across all Phase 3 Geometry outcomes.";
+
+    document.getElementById('scoreDisplay').innerHTML = `<strong>Score: ${score} / 15</strong><br><em>Curriculum Level: ${phaseStatus}</em>`;
+    document.getElementById('feedbackDisplay').innerHTML = `<strong>Student Feedback & Next Steps:</strong><br>${improvementText}`;
+    document.getElementById('page-results').classList.add('active');
+
+    // Send data to Google Sheets via Web App URL
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: studentData.name,
+        year: studentData.year,
+        score: score,
+        assessment: phaseStatus,
+        improvements: improvementText
+      })
+    });
+
+    studentData.score = score;
+    studentData.assessment = phaseStatus;
+    studentData.improvements = improvementText;
+  }
+
+  function teacherAccess() {
+    let pin = prompt("Enter Teacher Access PIN:");
+    if(pin === "1335") {
+      let csvContent = "data:text/csv;charset=utf-8," 
+        + "Timestamp,Student Name,Year Level,Score,Phase 3 Assessment,Areas for Improvement\n"
+        + `${new Date().toISOString()},"${studentData.name}","${studentData.year}","${studentData.score}/15","${studentData.assessment}","${studentData.improvements}"`;
+      
+      let encodedUri = encodeURI(csvContent);
+      let link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `student_result_${studentData.name}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      alert("Incorrect PIN.");
+    }
+  }
+
+  renderQuestions();
+</script>
+</body>
+</html>
